@@ -70,6 +70,8 @@
 #include <utility>
 #include <vector>
 
+#include <iomanip>
+
 using namespace clang;
 
 LLVM_INSTANTIATE_REGISTRY(PragmaHandlerRegistry)
@@ -227,7 +229,67 @@ void Preprocessor::FinalizeForModelFile() {
   PragmaHandlers = std::move(PragmaHandlersBackup);
 }
 
+void clean_and_print_char(char ch)
+{
+  switch (ch)
+  { 
+  case '0': case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9':
+  case 'a': case 'b': case 'c': case 'd': case 'e': case 'f': case 'g': case 'h': case 'i': case 'j':
+  case 'k': case 'l': case 'm': case 'n': case 'o': case 'p': case 'q': case 'r': case 's': case 't':
+  case 'u': case 'v': case 'w': case 'x': case 'y': case 'z':
+  case 'A': case 'B': case 'C': case 'D': case 'E': case 'F': case 'G': case 'H': case 'I': case 'J':
+  case 'K': case 'L': case 'M': case 'N': case 'O': case 'P': case 'Q': case 'R': case 'S': case 'T':
+  case 'U': case 'V': case 'W': case 'X': case 'Y': case 'Z':
+  case '!': case '\'': case '#': case '$': case '%': case '&': case '(': case ')': case '*': case '+':
+  case ',': case '-': case '.': case '/': case ':': case ';': case '<': case '=': case '>': case '?':
+  case '@': case '[': case ']': case '^': case '_': case '`': case '{': case '|': case '}': case '~':
+    llvm::errs() << ch;
+    break;
+
+  case '"':
+    llvm::errs() << "\\\"";
+    break;
+
+  case '\\':
+    llvm::errs() << "\\\\";
+    break;
+  
+  case '\f':
+    llvm::errs() << "\\f";
+    break;
+
+  case '\n':
+    llvm::errs() << "\\n";
+    break;
+
+  case '\r':
+    llvm::errs() << "\\r";
+    break;
+
+  case '\t':
+    llvm::errs() << "\\t";
+    break;
+
+  case '\v':
+    llvm::errs() << "\\v";
+    break;
+
+  default:
+    unsigned char highNibble = (ch >> 4) & 0xF;
+    unsigned char lowNibble = ch & 0xF;
+
+    char highNibbleChar = highNibble < 10 ? '0' + highNibble : 'A' + (highNibble - 10);
+    char lowNibbleChar = lowNibble < 10 ? '0' + lowNibble : 'A' + (lowNibble - 10);
+
+    llvm::errs() << "\\x";
+    llvm::errs() << highNibbleChar;
+    llvm::errs() << lowNibbleChar;
+    break;
+  }
+}
+
 void Preprocessor::DumpToken(const Token &Tok, bool DumpFlags) const {
+#if 0
   llvm::errs() << tok::getTokenName(Tok.getKind());
 
   if (!Tok.isAnnotation())
@@ -251,6 +313,26 @@ void Preprocessor::DumpToken(const Token &Tok, bool DumpFlags) const {
   llvm::errs() << "\tLoc=<";
   DumpLocation(Tok.getLocation());
   llvm::errs() << ">";
+#else
+  llvm::errs() << tok::getTokenName(Tok.getKind());
+
+  bool CharDataInvalid = false;
+  const char *TokStart =
+      SourceMgr.getCharacterData(Tok.getLocation(), &CharDataInvalid);
+
+  auto strtok = std::string(TokStart, TokStart + Tok.getLength());
+
+  llvm::errs() << " \"";
+
+  for (char ch : strtok)
+  {
+    clean_and_print_char(ch);
+  }
+
+  llvm::errs() << "\" ";
+
+  DumpLocation(Tok.getLocation());
+#endif
 }
 
 void Preprocessor::DumpLocation(SourceLocation Loc) const {

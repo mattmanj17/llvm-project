@@ -60,6 +60,7 @@ void llvm::FoldingSetTrait<SourceLocation>::Profile(
 }
 
 void SourceLocation::print(raw_ostream &OS, const SourceManager &SM)const{
+#if 0
   if (!isValid()) {
     OS << "<invalid loc>";
     return;
@@ -83,6 +84,24 @@ void SourceLocation::print(raw_ostream &OS, const SourceManager &SM)const{
   OS << " <Spelling=";
   SM.getSpellingLoc(*this).print(OS, SM);
   OS << '>';
+#else
+  if (!isValid()) {
+    OS << "<invalid loc>";
+    return;
+  }
+
+  if (isFileID()) {
+    PresumedLoc PLoc = SM.getPresumedLoc(*this);
+
+    if (PLoc.isInvalid()) {
+      OS << "<invalid>";
+      return;
+    }
+
+    OS << PLoc.getLine() << ':' << PLoc.getColumn();
+    return;
+  }
+#endif
 }
 
 LLVM_DUMP_METHOD std::string
