@@ -314,22 +314,26 @@ void Preprocessor::DumpToken(const Token &Tok, bool DumpFlags) const {
   DumpLocation(Tok.getLocation());
   llvm::errs() << ">";
 #else
-  llvm::errs() << tok::getTokenName(Tok.getKind());
+  llvm::errs() << (unsigned short)Tok.getKind();
 
-  bool CharDataInvalid = false;
-  const char *TokStart =
-      SourceMgr.getCharacterData(Tok.getLocation(), &CharDataInvalid);
-
-  auto strtok = std::string(TokStart, TokStart + Tok.getLength());
-
-  llvm::errs() << " \"";
-
-  for (char ch : strtok)
-  {
-    clean_and_print_char(ch);
-  }
-
-  llvm::errs() << "\" ";
+  #if 0
+    bool CharDataInvalid = false;
+    const char *TokStart =
+        SourceMgr.getCharacterData(Tok.getLocation(), &CharDataInvalid);
+    
+    auto strtok = std::string(TokStart, TokStart + Tok.getLength());
+    
+    llvm::errs() << " \"";
+    
+    for (char ch : strtok)
+    {
+      clean_and_print_char(ch);
+    }
+    
+    llvm::errs() << "\" ";
+  #else
+    llvm::errs() << ":";
+  #endif
 
   DumpLocation(Tok.getLocation());
 #endif
